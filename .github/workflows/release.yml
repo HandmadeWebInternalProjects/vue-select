@@ -1,28 +1,20 @@
-name: Release
+name: Number Rollup
+
 on:
-  push:
-    branches:
-      - master
-jobs:
   release:
-    runs-on: ubuntu-18.04
+    types: [created]
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v1
-      - uses: actions/setup-node@v1
-        with:
-          node-version: 12
+      - run: npm ci
 
-      - name: Install dependencies
-        run: yarn install --frozen-lockfile
-
-      - name: Test with Coverage
-        run: yarn test
-
-      - name: Build
-        run: yarn build
-
-      - name: Release
+  publish-npm:
+    needs: build
+    runs-on: ubuntu-latest
+    steps:
+      - run: npm ci
+      - run: npm run build
         env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-          NPM_TOKEN: ${{ secrets.NPM_TOKEN }}
-        run: npx semantic-release
+          NODE_AUTH_TOKEN: ${{secrets.ACCESS_TOKEN}}
