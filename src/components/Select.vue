@@ -16,35 +16,40 @@
       @mousedown="toggleDropdown($event)"
     >
       <div ref="selectedOptions" class="vs__selected-options">
-        <slot
-          v-for="option in selectedValue"
-          name="selected-option-container"
-          :option="normalizeOptionForSlot(option)"
-          :deselect="deselect"
-          :multiple="multiple"
-          :disabled="disabled"
-        >
-          <span :key="getOptionKey(option)" class="vs__selected">
-            <slot
-              name="selected-option"
-              v-bind="normalizeOptionForSlot(option)"
-            >
-              {{ getOptionLabel(option) }}
-            </slot>
-            <button
-              v-if="multiple"
-              ref="deselectButtons"
-              :disabled="disabled"
-              type="button"
-              class="vs__deselect"
-              :title="`Deselect ${getOptionLabel(option)}`"
-              :aria-label="`Deselect ${getOptionLabel(option)}`"
-              @click="deselect(option)"
-            >
-              <component :is="childComponents.Deselect" />
-            </button>
-          </span>
-        </slot>
+        <Container @drop="onDrop">
+          <Draggable v-for="option in selectedValue" :key="selectedValue.id">
+            <div class="draggable-item">
+              <slot
+                name="selected-option-container"
+                :option="normalizeOptionForSlot(option)"
+                :deselect="deselect"
+                :multiple="multiple"
+                :disabled="disabled"
+              >
+                <span :key="getOptionKey(option)" class="vs__selected">
+                  <slot
+                    name="selected-option"
+                    v-bind="normalizeOptionForSlot(option)"
+                  >
+                    {{ getOptionLabel(option) }}
+                  </slot>
+                  <button
+                    v-if="multiple"
+                    ref="deselectButtons"
+                    :disabled="disabled"
+                    type="button"
+                    class="vs__deselect"
+                    :title="`Deselect ${getOptionLabel(option)}`"
+                    :aria-label="`Deselect ${getOptionLabel(option)}`"
+                    @click="deselect(option)"
+                  >
+                    <component :is="childComponents.Deselect" />
+                  </button>
+                </span>
+              </slot>
+            </div>
+          </Draggable>
+        </Container>
 
         <slot name="search" v-bind="scope.search">
           <input
@@ -143,12 +148,14 @@ import childComponents from './childComponents.js'
 import appendToBody from '../directives/appendToBody.js'
 import sortAndStringify from '../utility/sortAndStringify.js'
 import uniqueId from '../utility/uniqueId.js'
+import { Container, Draggable } from "vue-dndrop";
+import { applyDrag, generateItems } from "../utility/dragHelpers.js";
 
 /**
  * @name VueSelect
  */
 export default {
-  components: { ...childComponents },
+  components: { ...childComponents, Container, Draggable },
 
   directives: { appendToBody },
 
@@ -1078,6 +1085,12 @@ export default {
       }
 
       this.$emit('input', value)
+    },
+
+    onDrop(dropResult) {
+      if (value !== undefined && value !== null && value !== '') {
+        this.$data._value = applyDrag(this.selectedOptions, dropResult);
+      }
     },
 
     /**
