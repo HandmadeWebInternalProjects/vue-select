@@ -1,4 +1,4 @@
-name: Number Rollup
+name: Publish Package
 
 on:
   release:
